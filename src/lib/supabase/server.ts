@@ -1,11 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
 export function createServerSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (typeof window !== 'undefined') {
+    throw new Error('createServerSupabaseClient must not be called from the browser');
+  }
+
+  const url = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceRoleKey) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
   }
 
   return createClient(url, serviceRoleKey);

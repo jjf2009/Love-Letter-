@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 import { STORAGE_BUCKET } from '@/lib/constants';
 import { exportKeyToBase64Url, generateAesGcmKey, encryptBytes, encryptText } from '@/lib/crypto';
-import { messageObjectPath, imageObjectPath } from '@/lib/letters/storagePaths';
+import { imageObjectPath, messageObjectPath } from '@/lib/letters/storagePaths';
 import { generateSlug } from '@/lib/slug';
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser';
 
@@ -66,23 +66,23 @@ export default function CreatePage() {
               compressedImages.map(async (img) => encryptBytes(new Uint8Array(await img.arrayBuffer()), key)),
             );
 
-            const paths = [
-              messageObjectPath(storagePath),
-              ...imagePacked.map((_, idx) => imageObjectPath(storagePath, idx)),
-            ];
-
-            const signedUploadRes = await fetch('/api/storage/signed-upload', {
+            const createRes = await fetch('/api/letters/create', {
               method: 'POST',
               headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ paths }),
+              body: JSON.stringify({
+                storagePath,
+                slug,
+                imageCount: imagePacked.length,
+                imageMimeType: 'image/jpeg',
+              }),
             });
 
-            if (!signedUploadRes.ok) {
-              throw new Error('Failed to create upload URLs');
+            if (!createRes.ok) {
+              throw new Error('Failed to create letter');
             }
 
-            const signedUploadJson = (await signedUploadRes.json()) as { uploads: UploadToken[] };
-            const tokensByPath = new Map(signedUploadJson.uploads.map((u) => [u.path, u.token]));
+            const createJson = (await createRes.json()) as { uploads: UploadToken[] };
+            const tokensByPath = new Map(createJson.uploads.map((u) => [u.path, u.token]));
 
             // Upload message
             {
@@ -105,19 +105,6 @@ export default function CreatePage() {
                 .uploadToSignedUrl(path, token, new Blob([imagePacked[i]!], { type: 'application/octet-stream' }));
               if (error) throw error;
             }
-
-            // Store metadata (key never stored)
-            const { error: insertError } = await supabase.from('letters').insert({
-              id: storagePath,
-              slug,
-              storage_path: storagePath,
-              metadata: {
-                imageCount: imagePacked.length,
-                imageMimeType: 'image/jpeg',
-              },
-            });
-
-            if (insertError) throw insertError;
 
             router.push(`/success/${slug}#key=${keyBase64Url}`);
           } catch (err) {

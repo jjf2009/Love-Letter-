@@ -24,8 +24,8 @@ export default function SuccessPage() {
 
   const magicLink = useMemo(() => {
     if (!key) return null;
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-    return `${baseUrl}/letter/${params.slug}#key=${key}`;
+    if (typeof window === 'undefined') return null;
+    return `${window.location.origin}/letter/${params.slug}#key=${key}`;
   }, [key, params.slug]);
 
   return (

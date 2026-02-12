@@ -16,6 +16,8 @@ npm i
 cp .env.example .env.local
 ```
 
+Make sure you set `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` as well as the `NEXT_PUBLIC_*` vars.
+
 3. Run the dev server
 
 ```bash

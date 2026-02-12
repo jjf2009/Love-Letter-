@@ -8,9 +8,13 @@ export function base64UrlToBase64(base64url: string): string {
   return base64 + '='.repeat(padLength);
 }
 
+function isNodeLike(): boolean {
+  return typeof window === 'undefined' && typeof Buffer !== 'undefined';
+}
+
 function bytesToBase64(bytes: Uint8Array): string {
   // Node
-  if (typeof Buffer !== 'undefined') {
+  if (isNodeLike()) {
     return Buffer.from(bytes).toString('base64');
   }
 
@@ -22,7 +26,7 @@ function bytesToBase64(bytes: Uint8Array): string {
 
 function base64ToBytes(base64: string): Uint8Array<ArrayBuffer> {
   // Node
-  if (typeof Buffer !== 'undefined') {
+  if (isNodeLike()) {
     const buf = Buffer.from(base64, 'base64');
     const out = new Uint8Array(new ArrayBuffer(buf.byteLength));
     out.set(buf);
